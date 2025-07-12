@@ -1,0 +1,946 @@
+<!DOCTYPE html>
+<html lang="es" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mapeo de Suelos Georreferenciado, Balance Nutricional, Recomendación de Abonamiento y Análisis del Microbioma</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Chart.js para gráficos -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        /* --- NUEVA PALETA DE COLORES VIBRANTE --- */
+        :root {
+            --color-bg: #f0f9ff; /* Azul muy claro */
+            --color-card-bg: #ffffff; /* Blanco puro */
+            --color-card-dark: #1f2937; /* Gris oscuro para tarjetas oscuras */
+            --color-text-primary: #0f172a; /* Negro azulado */
+            --color-text-secondary: #374151; /* Gris medio */
+            --color-text-light: #64748b; /* Gris claro */
+            --color-text-white: #ffffff; /* Blanco */
+            
+            /* Colores vibrantes principales */
+            --color-success: #10b981; /* Verde esmeralda */
+            --color-warning: #f59e0b; /* Amarillo dorado */
+            --color-danger: #ef4444; /* Rojo coral */
+            --color-info: #3b82f6; /* Azul brillante */
+            --color-accent: #8b5cf6; /* Violeta */
+            --color-teal: #14b8a6; /* Teal vibrante */
+            
+            /* Colores pastel */
+            --color-pastel-green: #dcfce7; /* Verde pastel */
+            --color-pastel-yellow: #fef3c7; /* Amarillo pastel */
+            --color-pastel-red: #fee2e2; /* Rojo pastel */
+            --color-pastel-blue: #dbeafe; /* Azul pastel */
+            --color-pastel-purple: #ede9fe; /* Violeta pastel */
+            
+            --color-border: #e2e8f0;
+            --color-border-dark: #475569;
+
+            /* Colores para la tabla de factores limitantes */
+            --limit-1-bg: var(--color-pastel-red); --limit-1-text: var(--color-danger);
+            --limit-2-bg: var(--color-pastel-yellow); --limit-2-text: #d97706;
+            --limit-3-bg: var(--color-pastel-blue); --limit-3-text: var(--color-info);
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, var(--color-bg) 0%, #e0f2fe 100%);
+            color: var(--color-text-primary);
+            font-size: 16px;
+            line-height: 1.7;
+            min-height: 100vh;
+        }
+
+        h1, h2, h3, h4, h5, h6 {
+            font-family: 'Inter', sans-serif;
+            font-weight: 700;
+            color: var(--color-text-primary);
+        }
+        
+        .section-heading {
+            padding-bottom: 1rem;
+            margin-bottom: 3rem;
+            border-bottom: 4px solid var(--color-teal);
+            background: linear-gradient(90deg, var(--color-teal), var(--color-success));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .card {
+            background: var(--color-card-bg);
+            color: var(--color-text-primary);
+            border: 2px solid var(--color-border);
+            border-radius: 1rem;
+            box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 10px 10px -5px rgb(0 0 0 / 0.04);
+            transition: all 0.3s ease;
+            overflow: hidden;
+        }
+        
+        .card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.25);
+            border-color: var(--color-teal);
+        }
+        
+        .card-dark {
+            background: linear-gradient(135deg, var(--color-card-dark) 0%, #374151 100%);
+            color: var(--color-text-white);
+            border: 2px solid var(--color-border-dark);
+        }
+        
+        .card-success {
+            background: linear-gradient(135deg, var(--color-pastel-green) 0%, #a7f3d0 100%);
+            border: 2px solid var(--color-success);
+        }
+        
+        .card-warning {
+            background: linear-gradient(135deg, var(--color-pastel-yellow) 0%, #fde68a 100%);
+            border: 2px solid var(--color-warning);
+        }
+        
+        .card-danger {
+            background: linear-gradient(135deg, var(--color-pastel-red) 0%, #fecaca 100%);
+            border: 2px solid var(--color-danger);
+        }
+        
+        .card-info {
+            background: linear-gradient(135deg, var(--color-pastel-blue) 0%, #bfdbfe 100%);
+            border: 2px solid var(--color-info);
+        }
+
+        .gauge-card {
+            background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+            color: var(--color-text-white);
+            border: 2px solid var(--color-teal);
+        }
+        
+        .text-success { color: var(--color-success); }
+        .text-warning { color: var(--color-warning); }
+        .text-danger { color: var(--color-danger); }
+        .text-info { color: var(--color-info); }
+        .text-accent { color: var(--color-accent); }
+        .text-teal { color: var(--color-teal); }
+        
+        .bg-gradient-primary {
+            background: linear-gradient(135deg, var(--color-teal) 0%, var(--color-success) 100%);
+        }
+        
+        .bg-gradient-warning {
+            background: linear-gradient(135deg, var(--color-warning) 0%, #f97316 100%);
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, var(--color-teal) 0%, var(--color-success) 100%);
+            color: white;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px -5px rgba(20, 184, 166, 0.4);
+        }
+        
+        .nutrient-bar {
+            background: linear-gradient(90deg, #f1f5f9 0%, #cbd5e1 100%);
+            border-radius: 0.5rem;
+            overflow: hidden;
+        }
+        
+        .table-header {
+            background: linear-gradient(135deg, var(--color-card-dark) 0%, #475569 100%);
+            color: var(--color-text-white);
+        }
+        
+        .table-row:nth-child(even) {
+            background-color: #f8fafc;
+        }
+        
+        .table-row:hover {
+            background-color: var(--color-pastel-blue);
+            transition: background-color 0.2s ease;
+        }
+
+        .concept-card {
+            border-left: 4px solid;
+            transition: all 0.3s ease;
+        }
+
+        .concept-card:hover {
+            transform: translateX(8px);
+        }
+
+        .concept-card.high { border-left-color: var(--color-success); }
+        .concept-card.medium { border-left-color: var(--color-warning); }
+        .concept-card.low { border-left-color: var(--color-danger); }
+
+        .status-badge {
+            display: inline-block;
+            padding: 0.5rem 1rem;
+            border-radius: 0.75rem;
+            font-weight: 600;
+            font-size: 0.875rem;
+        }
+
+        .status-high { background-color: var(--color-pastel-green); color: var(--color-success); }
+        .status-medium { background-color: var(--color-pastel-yellow); color: var(--color-warning); }
+        .status-low { background-color: var(--color-pastel-red); color: var(--color-danger); }
+    </style>
+</head>
+
+<body class="antialiased">
+
+    <!-- Header -->
+    <header class="p-4 md:px-8 sticky top-0 bg-white/95 backdrop-blur-lg z-50 border-b-2 border-teal-200 shadow-lg">
+        <div class="max-w-7xl mx-auto flex justify-between items-center">
+             <div>
+                <img src="https://i.postimg.cc/BvcK2DhV/Tres60-Horizontal-B.png" alt="Logo Tres60 analytics" class="h-12">
+                <div class="mt-1 text-xs">
+                    <a href="https://www.tres60analytics.com" target="_blank" class="font-semibold text-teal hover:text-success transition-colors">www.tres60analytics.com</a>
+                    <span class="mx-1 font-bold text-teal">|</span>
+                    <a href="tel:+34667756869" class="font-semibold text-teal hover:text-success transition-colors">+34 667 756 869</a>
+                </div>
+            </div>
+            <div class="text-right">
+                <p class="text-xl font-bold text-primary">Cliente: Liven Agro</p>
+                <p class="text-sm font-semibold text-secondary">Parcela: Demo 01</p>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-6xl mx-auto p-5 md:p-10">
+        
+        <section class="text-center my-12">
+            <h1 class="text-5xl md:text-6xl bg-gradient-primary bg-clip-text text-transparent font-bold">Mapeo de Suelos Georreferenciado, Balance Nutricional, Recomendación de Abonamiento y Análisis del Microbioma</h1>
+            <p class="mt-6 text-xl max-w-4xl mx-auto text-secondary">Análisis detallado para maximizar la rentabilidad y sostenibilidad del cultivo de maíz, con un objetivo de **14 Tm/Ha**.</p>
+        </section>
+
+        <section class="my-20">
+            <h2 class="text-4xl section-heading">Diagnóstico Ejecutivo: 8 Indicadores Clave</h2>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mt-8">
+                <!-- Fisicoquímicos -->
+                <div class="card gauge-card p-6 text-center">
+                    <h3 class="text-xl mb-4 text-white font-semibold">pH del Suelo</h3>
+                    <canvas id="ph-gauge" height="100"></canvas>
+                    <p class="text-3xl font-bold mt-4 text-danger">7.9</p>
+                    <p class="text-sm font-semibold text-danger">Alcalino</p>
+                </div>
+                <div class="card gauge-card p-6 text-center">
+                    <h3 class="text-xl mb-4 text-white font-semibold">Materia Orgánica</h3>
+                    <canvas id="mo-gauge" height="100"></canvas>
+                    <p class="text-3xl font-bold mt-4 text-danger">~1.5%</p>
+                    <p class="text-sm font-semibold text-danger">Bajo</p>
+                </div>
+                <div class="card gauge-card p-6 text-center">
+                    <h3 class="text-xl mb-4 text-white font-semibold">Potasio (K)</h3>
+                    <canvas id="k-gauge" height="100"></canvas>
+                    <p class="text-3xl font-bold mt-4 text-danger">Muy Bajo</p>
+                    <p class="text-sm font-semibold text-danger">Deficiencia Severa</p>
+                </div>
+                <div class="card gauge-card p-6 text-center">
+                    <h3 class="text-xl mb-4 text-white font-semibold">Potencial Prod.</h3>
+                    <canvas id="ipp-gauge" height="100"></canvas>
+                    <p class="text-3xl font-bold mt-4 text-warning">73</p>
+                    <p class="text-sm font-semibold text-warning">Medio-Alto</p>
+                </div>
+                
+                <!-- Biológicos -->
+                <div class="card gauge-card p-6 text-center">
+                    <h3 class="text-xl mb-4 text-white font-semibold">Biosostenibilidad</h3>
+                    <canvas id="biosustainability-gauge" height="100"></canvas>
+                    <p class="text-3xl font-bold mt-4 text-warning">56</p>
+                    <p class="text-sm font-semibold text-warning">Medio</p>
+                </div>
+                <div class="card gauge-card p-6 text-center">
+                    <h3 class="text-xl mb-4 text-white font-semibold">Salud & Biocontrol</h3>
+                    <canvas id="biocontrol-gauge" height="100"></canvas>
+                    <p class="text-3xl font-bold mt-4 text-danger">Muy Bajo</p>
+                    <p class="text-sm font-semibold text-danger">Inhibido</p>
+                </div>
+                <div class="card gauge-card p-6 text-center">
+                    <h3 class="text-xl mb-4 text-white font-semibold">Resiliencia</h3>
+                    <canvas id="resilience-gauge" height="100"></canvas>
+                    <p class="text-3xl font-bold mt-4 text-danger">Bajo</p>
+                    <p class="text-sm font-semibold text-danger">Frágil</p>
+                </div>
+                <div class="card gauge-card p-6 text-center">
+                    <h3 class="text-xl mb-4 text-white font-semibold">Ratio Hongo:Bacteria</h3>
+                    <canvas id="fh-ratio-gauge" height="100"></canvas>
+                    <p class="text-3xl font-bold mt-4 text-white">1:258</p>
+                    <p class="text-sm font-semibold text-warning">Desequilibrado</p>
+                </div>
+            </div>
+        </section>
+        
+        <section class="my-20">
+            <h2 class="text-4xl section-heading">Propiedades Físicas y Químicas del Suelo</h2>
+            <div class="space-y-8">
+                <div class="card card-info p-8">
+                    <h3 class="text-2xl mb-4 text-info font-bold">pH: El Regulador Maestro</h3>
+                    <p class="text-secondary">El pH alcalino de 7.9 es el factor más crítico. Actúa como un interruptor que "apaga" la disponibilidad de micronutrientes vitales como el Hierro, Zinc y Manganeso, aunque estén presentes en el suelo. La mayoría de los cultivos prefieren un rango de 6.0 a 7.0 para una absorción óptima.</p>
+                </div>
+                <div class="card card-warning p-8">
+                    <h3 class="text-2xl mb-4 text-warning font-bold">Materia Orgánica (MO): El Corazón del Suelo</h3>
+                    <p class="text-secondary">Con niveles bajos (0.8-2.2%), la capacidad del suelo para retener agua y nutrientes es limitada. La MO es la principal fuente de Nitrógeno y Azufre de liberación lenta y el hogar de la vida microbiana. Aumentarla es clave para la fertilidad a largo plazo.</p>
+                </div>
+                <div class="card card-success p-8">
+                    <h3 class="text-2xl mb-4 text-success font-bold">Conductividad Eléctrica (CE) y Sales</h3>
+                    <p class="text-secondary">Los niveles de 218-470 µS/cm son bajos e indican que no existen problemas de salinidad en la parcela. Esto es positivo, ya que un exceso de sales dificultaría la absorción de agua por parte del cultivo.</p>
+                </div>
+                <div class="card p-8">
+                    <h3 class="text-2xl mb-4 text-accent font-bold">Capacidad de Intercambio Catiónico (CIC)</h3>
+                    <p class="text-secondary">La CIC es la "despensa" del suelo. Indica su capacidad para retener nutrientes como Calcio, Magnesio y Potasio. Un suelo con baja MO, como el suyo, suele tener una CIC limitada, lo que aumenta el riesgo de que los nutrientes se laven con el riego.</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="my-20">
+            <h2 class="text-4xl section-heading">Análisis Nutricional Detallado</h2>
+            <div id="nutrient-analysis-container" class="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-8"></div>
+        </section>
+        
+        <section class="my-20">
+             <h2 class="text-4xl section-heading">Resultados Biológicos: El Motor Oculto del Suelo</h2>
+             
+             <!-- Sección Introductoria -->
+             <div class="card card-info p-8 mb-8">
+                <h3 class="text-3xl mb-4 text-info font-bold">🔬 Análisis del Microbioma: Su Ecosistema Invisible</h3>
+                <p class="text-lg text-secondary mb-4">El microbioma del suelo es un universo invisible de millones de microorganismos que trabajan como un ecosistema complejo. Estos diminutos seres vivos son los verdaderos ingenieros de la fertilidad, realizando desde procesos básicos hasta funciones altamente especializadas que determinan el éxito de su cultivo.</p>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+                    <div class="bg-white p-4 rounded-lg border-l-4 border-teal-500">
+                        <h4 class="font-bold text-teal mb-2">Población Microbiana Detectada:</h4>
+                        <p><strong>10,000 millones</strong> de bacterias por gramo</p>
+                        <p><strong>10 millones</strong> de hongos por gramo</p>
+                    </div>
+                    <div class="bg-white p-4 rounded-lg border-l-4 border-warning">
+                        <h4 class="font-bold text-warning mb-2">Ratio Dominante:</h4>
+                        <p><strong>1:258</strong> Hongo:Bacteria</p>
+                        <p class="text-sm text-gray-600">Fuertemente dominado por bacterias</p>
+                    </div>
+                </div>
+             </div>
+
+             <!-- Indicadores de Salud General -->
+             <div class="card card-dark p-8 mb-8">
+                <h3 class="text-3xl mb-6 text-center text-white font-bold">📊 Indicadores de Salud General del Microbioma</h3>
+                <p class="text-gray-300 mb-6 text-center">Estos indicadores evalúan la capacidad básica de su ecosistema microbiano para mantenerse activo y productivo.</p>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <!-- Salud General -->
+                    <div class="concept-card medium bg-gray-800 p-6 rounded-lg">
+                        <div class="flex items-center justify-between mb-4">
+                            <h4 class="text-xl font-bold text-white">Salud General</h4>
+                            <span class="status-badge status-medium">Medio</span>
+                        </div>
+                        <p class="text-gray-300 text-sm mb-3">Evaluación global del estado del ecosistema microbiano y su capacidad para realizar procesos vitales básicos.</p>
+                        <div class="bg-gray-700 p-3 rounded text-xs text-gray-300">
+                            <strong>Interpretación:</strong> El motor biológico de su suelo funciona pero no a su máximo potencial. Hay margen para optimización.
+                        </div>
+                    </div>
+
+                    <!-- Biodiversidad -->
+                    <div class="concept-card high bg-gray-800 p-6 rounded-lg">
+                        <div class="flex items-center justify-between mb-4">
+                            <h4 class="text-xl font-bold text-white">Biodiversidad</h4>
+                            <span class="status-badge status-high">Muy Alto</span>
+                        </div>
+                        <p class="text-gray-300 text-sm mb-3">Variedad de especies microbianas (bacterias, hongos, etc.) presentes en el suelo.</p>
+                        <div class="bg-green-900/30 p-3 rounded text-xs text-gray-300">
+                            <strong>Excelente:</strong> Tiene un equipo diverso de trabajadores microscópicos con diferentes habilidades. Es como una caja de herramientas completa.
+                        </div>
+                    </div>
+
+                    <!-- Funcionalidad -->
+                    <div class="concept-card high bg-gray-800 p-6 rounded-lg">
+                        <div class="flex items-center justify-between mb-4">
+                            <h4 class="text-xl font-bold text-white">Funcionalidad</h4>
+                            <span class="status-badge status-high">Muy Alto</span>
+                        </div>
+                        <p class="text-gray-300 text-sm mb-3">Intensidad de procesos clave como ciclos del carbono, nitrógeno y fósforo.</p>
+                        <div class="bg-green-900/30 p-3 rounded text-xs text-gray-300">
+                            <strong>Excelente:</strong> El motor biológico trabaja intensamente en procesos básicos de descomposición y liberación de nutrientes primarios.
+                        </div>
+                    </div>
+
+                    <!-- Biocontrol -->
+                    <div class="concept-card low bg-gray-800 p-6 rounded-lg">
+                        <div class="flex items-center justify-between mb-4">
+                            <h4 class="text-xl font-bold text-white">Biocontrol</h4>
+                            <span class="status-badge status-low">Muy Bajo</span>
+                        </div>
+                        <p class="text-gray-300 text-sm mb-3">Capacidad de los microorganismos para proteger las plantas contra patógenos y enfermedades.</p>
+                        <div class="bg-red-900/30 p-3 rounded text-xs text-gray-300">
+                            <strong>Crítico:</strong> Su suelo carece de defensas naturales. Microorganismos como Trichoderma o Bacillus están ausentes o inactivos.
+                        </div>
+                    </div>
+
+                    <!-- Resiliencia -->
+                    <div class="concept-card low bg-gray-800 p-6 rounded-lg">
+                        <div class="flex items-center justify-between mb-4">
+                            <h4 class="text-xl font-bold text-white">Resiliencia</h4>
+                            <span class="status-badge status-low">Bajo</span>
+                        </div>
+                        <p class="text-gray-300 text-sm mb-3">Capacidad del suelo para recuperarse tras perturbaciones (sequía, laboreo, químicos).</p>
+                        <div class="bg-red-900/30 p-3 rounded text-xs text-gray-300">
+                            <strong>Frágil:</strong> El microbioma puede colapsar ante estrés, comprometiendo el suministro de nutrientes y protección del cultivo.
+                        </div>
+                    </div>
+                </div>
+             </div>
+
+             <!-- Funciones Especializadas -->
+             <div class="card card-dark p-8 mb-8">
+                <h3 class="text-3xl mb-6 text-center text-white font-bold">🎯 Funciones Especializadas del Microbioma</h3>
+                <p class="text-gray-300 mb-6 text-center">Estas son las funciones avanzadas que realizan microbios especializados para optimizar el crecimiento y protección del cultivo.</p>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Adaptación al Estrés -->
+                    <div class="concept-card low bg-gray-800 p-6 rounded-lg">
+                        <div class="flex items-center justify-between mb-4">
+                            <h4 class="text-xl font-bold text-white">Adaptación al Estrés</h4>
+                            <span class="status-badge status-low">Muy Bajo</span>
+                        </div>
+                        <p class="text-gray-300 text-sm mb-4">Capacidad microbiana para ayudar a las plantas durante condiciones adversas.</p>
+                        
+                        <div class="space-y-3">
+                            <div class="bg-gray-700 p-3 rounded">
+                                <h5 class="font-semibold text-white text-sm mb-1">🌵 Estrés por Sequía:</h5>
+                                <p class="text-xs text-gray-300">Hongos micorrícicos que extienden el sistema radicular y bacterias que producen exopolisacáridos para retener humedad.</p>
+                            </div>
+                            <div class="bg-gray-700 p-3 rounded">
+                                <h5 class="font-semibold text-white text-sm mb-1">🧪 Estrés Químico/Salino:</h5>
+                                <p class="text-xs text-gray-300">Microbios que degradan o inmovilizan compuestos tóxicos como metales pesados o residuos de pesticidas.</p>
+                            </div>
+                        </div>
+                        
+                        <div class="bg-red-900/30 p-3 rounded text-xs text-gray-300 mt-4">
+                            <strong>Impacto:</strong> Su cultivo estará desprotegido ante el estrés ambiental, reduciendo significativamente su capacidad de adaptación.
+                        </div>
+                    </div>
+
+                    <!-- Producción de Hormonas -->
+                    <div class="concept-card low bg-gray-800 p-6 rounded-lg">
+                        <div class="flex items-center justify-between mb-4">
+                            <h4 class="text-xl font-bold text-white">Producción de Hormonas</h4>
+                            <span class="status-badge status-low">Muy Bajo</span>
+                        </div>
+                        <p class="text-gray-300 text-sm mb-4">Síntesis de reguladores de crecimiento vegetal por parte de los microorganismos.</p>
+                        
+                        <div class="space-y-3">
+                            <div class="bg-gray-700 p-3 rounded">
+                                <h5 class="font-semibold text-warning text-sm mb-1">🌱 Auxinas (Muy Bajo):</h5>
+                                <p class="text-xs text-gray-300">Hormonas que estimulan el crecimiento radicular, haciendo raíces más largas y ramificadas.</p>
+                            </div>
+                            <div class="bg-gray-700 p-3 rounded">
+                                <h5 class="font-semibold text-warning text-sm mb-1">🔬 Citocininas (Muy Bajo):</h5>
+                                <p class="text-xs text-gray-300">Hormonas que promueven la división celular y retrasan el envejecimiento de las plantas.</p>
+                            </div>
+                        </div>
+                        
+                        <div class="bg-red-900/30 p-3 rounded text-xs text-gray-300 mt-4">
+                            <strong>Consecuencia:</strong> La planta no recibe bioestimulación natural, limitando su vigor, desarrollo radicular y longevidad.
+                        </div>
+                    </div>
+                </div>
+             </div>
+
+             <!-- Movilización de Nutrientes -->
+             <div class="card card-dark p-8 mb-8">
+                <h3 class="text-3xl mb-6 text-center text-white font-bold">⚛️ Movilización de Nutrientes por el Microbioma</h3>
+                <p class="text-gray-300 mb-6 text-center">Capacidad de los microbios para hacer disponibles los nutrientes del suelo que están "bloqueados" en formas no asimilables.</p>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <div class="bg-green-900/20 p-4 rounded-lg border border-green-700">
+                        <h4 class="font-bold text-success mb-2">Nitrógeno: Alto</h4>
+                        <p class="text-xs text-gray-300">Bacterias activas en la fijación biológica de N₂ atmosférico y mineralización de materia orgánica.</p>
+                    </div>
+                    
+                    <div class="bg-green-900/20 p-4 rounded-lg border border-green-700">
+                        <h4 class="font-bold text-success mb-2">Fósforo: Alto</h4>
+                        <p class="text-xs text-gray-300">Microorganismos producen ácidos y enzimas que solubilizan fósforo "bloqueado" en minerales.</p>
+                    </div>
+                    
+                    <div class="bg-yellow-900/20 p-4 rounded-lg border border-yellow-700">
+                        <h4 class="font-bold text-warning mb-2">Potasio: Medio</h4>
+                        <p class="text-xs text-gray-300">Capacidad moderada para liberar potasio de estructuras minerales complejas.</p>
+                    </div>
+                    
+                    <div class="bg-red-900/20 p-4 rounded-lg border border-red-700">
+                        <h4 class="font-bold text-danger mb-2">Zinc: Muy Bajo</h4>
+                        <p class="text-xs text-gray-300">Transporte y solubilización de zinc severamente limitados por el pH alcalino.</p>
+                    </div>
+                    
+                    <div class="bg-green-900/20 p-4 rounded-lg border border-green-700">
+                        <h4 class="font-bold text-success mb-2">Azufre: Muy Alto</h4>
+                        <p class="text-xs text-gray-300">Excelente equilibrio en el ciclo del azufre y liberación desde materia orgánica.</p>
+                    </div>
+                </div>
+             </div>
+
+             <!-- Paradoja Microbiológica -->
+             <div class="card p-8 mb-8" style="background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); border: 2px solid #f59e0b;">
+                <h3 class="text-3xl mb-6 text-center font-bold" style="color: #92400e;">🤔 La Paradoja de Su Suelo: ¿Por qué hay deficiencias si la actividad es alta?</h3>
+                
+                <p class="text-lg mb-6" style="color: #78350f;">Su suelo presenta una aparente contradicción fascinante: una alta actividad microbiana para movilizar N, P y K, pero bajos niveles químicos disponibles para la planta. Esta paradoja se explica diferenciando entre dos tipos de funcionalidad:</p>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+                    <div class="bg-green-100 p-6 rounded-lg border-l-4 border-green-500">
+                        <h4 class="font-bold text-green-800 text-xl mb-3">✅ Funcionalidad General (MUY ALTO)</h4>
+                        <p class="text-green-700 mb-3">El microbioma está vivo y extremadamente activo. Realiza procesos básicos de manera intensa:</p>
+                        <ul class="text-sm text-green-600 space-y-1">
+                            <li>• Descomposición de materia orgánica</li>
+                            <li>• Liberación de nutrientes primarios (N, P, K)</li>
+                            <li>• Ciclos biogeoquímicos básicos</li>
+                            <li>• Alta diversidad de especies</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="bg-red-100 p-6 rounded-lg border-l-4 border-red-500">
+                        <h4 class="font-bold text-red-800 text-xl mb-3">❌ Funcionalidad Especializada (MUY BAJO)</h4>
+                        <p class="text-red-700 mb-3">Las funciones avanzadas, cruciales para el rendimiento óptimo, están inhibidas:</p>
+                        <ul class="text-sm text-red-600 space-y-1">
+                            <li>• Producción de hormonas de crecimiento</li>
+                            <li>• Biocontrol de enfermedades</li>
+                            <li>• Adaptación al estrés</li>
+                            <li>• Resiliencia del sistema</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <div class="bg-white p-6 rounded-lg mt-6 border border-orange-300">
+                    <h4 class="font-bold text-orange-800 text-xl mb-3">🔑 La Causa Raíz: pH Alcalino (7.9)</h4>
+                    <p class="text-orange-700">El pH alcalino actúa como un "interruptor selectivo" que permite el funcionamiento básico del microbioma pero bloquea las funciones especializadas. Es como tener un motor potente funcionando en primera marcha: hay actividad, pero no puede desarrollar su máximo potencial.</p>
+                </div>
+                
+                <div class="text-center mt-6 p-4 bg-orange-200 rounded-lg">
+                    <p class="font-bold text-orange-800 text-lg">🎯 Resumen: Motor biológico funcional, pero pH alcalino impide "poner la marcha más alta"</p>
+                </div>
+             </div>
+
+             <!-- Estadísticas Poblacionales -->
+             <div class="card card-dark p-8">
+                <h3 class="text-3xl mb-6 text-center text-white font-bold">📈 Estadísticas y Ratios del Microbioma</h3>
+                <p class="text-gray-300 mb-6 text-center">Estas estadísticas revelan el equilibrio (o desequilibrio) de su ecosistema microscópico y sus implicaciones agronómicas.</p>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div class="bg-gray-800 p-6 rounded-lg text-center">
+                        <h4 class="text-2xl text-accent font-bold mb-4">👥 Población General</h4>
+                        <div class="space-y-4">
+                            <div class="bg-gray-700 p-4 rounded">
+                                <p class="text-4xl font-bold text-teal">10,000 millones</p>
+                                <p class="text-gray-300">Bacterias por gramo de suelo</p>
+                                <p class="text-xs text-gray-400 mt-1">Población muy elevada y activa</p>
+                            </div>
+                            <div class="bg-gray-700 p-4 rounded">
+                                <p class="text-4xl font-bold text-warning">10 millones</p>
+                                <p class="text-gray-300">Hongos por gramo de suelo</p>
+                                <p class="text-xs text-gray-400 mt-1">Población normal pero subordinada</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-gray-800 p-6 rounded-lg text-center">
+                        <h4 class="text-2xl text-accent font-bold mb-4">⚖️ Ratios Críticos</h4>
+                        <div class="space-y-4">
+                            <div class="bg-gray-700 p-4 rounded">
+                                <p class="text-4xl font-bold text-danger">1:258</p>
+                                <p class="text-gray-300 mb-2">Ratio Hongo:Bacteria</p>
+                                <p class="text-xs text-gray-400">Fuertemente dominado por bacterias</p>
+                            </div>
+                            <div class="bg-gray-700 p-4 rounded">
+                                <p class="text-4xl font-bold text-info">1:14</p>
+                                <p class="text-gray-300 mb-2">Ratio Arbuscular:Ectomycorriza</p>
+                                <p class="text-xs text-gray-400">Dominancia de hongos arbusculares</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="bg-gray-800 p-6 rounded-lg mt-6">
+                    <h4 class="text-xl mb-3 text-accent font-bold">🧬 Interpretación Agronómica del Ratio 1:258</h4>
+                    <p class="text-gray-300 mb-4">Un ratio Hongo:Bacteria de <strong class="text-danger">1:258</strong> revela un ecosistema profundamente desequilibrado hacia las bacterias. Este patrón es característico de:</p>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+                        <div class="bg-gray-700 p-4 rounded border-l-4 border-red-500">
+                            <h5 class="font-bold text-red-400 mb-2">⚠️ Indicadores Negativos</h5>
+                            <ul class="text-xs text-gray-300 space-y-1">
+                                <li>• Laboreo intensivo histórico</li>
+                                <li>• Materia orgánica de fácil descomposición</li>
+                                <li>• Ciclo rápido de nutrientes</li>
+                                <li>• Baja capacidad de almacenamiento</li>
+                            </ul>
+                        </div>
+                        
+                        <div class="bg-gray-700 p-4 rounded border-l-4 border-yellow-500">
+                            <h5 class="font-bold text-yellow-400 mb-2">📊 Comparación</h5>
+                            <ul class="text-xs text-gray-300 space-y-1">
+                                <li>• Suelos equilibrados: 1:1 a 5:1</li>
+                                <li>• Praderas maduras: 2:1 a 10:1</li>
+                                <li>• Su parcela: 1:258 (extremo)</li>
+                                <li>• Necesita reequilibrio urgente</li>
+                            </ul>
+                        </div>
+                        
+                        <div class="bg-gray-700 p-4 rounded border-l-4 border-blue-500">
+                            <h5 class="font-bold text-blue-400 mb-2">🎯 Implicaciones</h5>
+                            <ul class="text-xs text-gray-300 space-y-1">
+                                <li>• Baja capacidad de secuestro de carbono</li>
+                                <li>• Pérdida rápida de nutrientes</li>
+                                <li>• Menor resistencia a perturbaciones</li>
+                                <li>• Dependencia de insumos externos</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+             </div>
+        </section>
+
+        <section class="my-20">
+            <h2 class="text-4xl section-heading">Factores que Limitan la Disponibilidad de Nutrientes</h2>
+            <div class="card p-6">
+                <div class="bg-gray-50 p-4 rounded-lg mb-6">
+                    <p class="text-secondary mb-4">Esta tabla desglosa el "porqué" de las deficiencias, identificando los obstáculos que impiden que los nutrientes estén disponibles para su cultivo. La jerarquía del problema se indica con colores:</p>
+                    <div class="flex flex-wrap gap-4 text-sm">
+                        <span class="px-3 py-2 font-semibold rounded-lg" style="background-color: var(--limit-1-bg); color: var(--limit-1-text);">Factor Primario</span>
+                        <span class="px-3 py-2 font-semibold rounded-lg" style="background-color: var(--limit-2-bg); color: var(--limit-2-text);">Factor Secundario</span>
+                        <span class="px-3 py-2 font-semibold rounded-lg" style="background-color: var(--limit-3-bg); color: var(--limit-3-text);">Factor Terciario</span>
+                    </div>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead class="table-header">
+                            <tr id="limiting-factors-header"></tr>
+                        </thead>
+                        <tbody id="limiting-factors-body"></tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+        
+        <section class="my-20">
+             <h2 class="text-4xl section-heading">Balance Nutricional: Metodología de Cálculo</h2>
+             <div class="card p-8">
+                <p class="mb-6 text-secondary">Para determinar las necesidades exactas del cultivo, seguimos un proceso de 3 pasos que considera el potencial real de su parcela:</p>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="card-success p-6 text-center rounded-lg">
+                        <div class="text-5xl font-bold text-success mb-4">1</div>
+                        <h4 class="text-xl font-bold mb-3 text-primary">Ponderación por IPP</h4>
+                        <p class="text-sm text-secondary">Calculamos el peso de cada zona de la parcela según su Índice de Potencial Productivo para no tratar todo el campo por igual.</p>
+                    </div>
+                    <div class="card-warning p-6 text-center rounded-lg">
+                        <div class="text-5xl font-bold text-warning mb-4">2</div>
+                        <h4 class="text-xl font-bold mb-3 text-primary">Eficiencias de Absorción</h4>
+                        <p class="text-sm text-secondary">Aplicamos un factor de eficiencia a cada nutriente, ya que no todo el fertilizante aplicado es absorbido por la planta debido a factores como el pH o la textura.</p>
+                    </div>
+                    <div class="card-info p-6 text-center rounded-lg">
+                        <div class="text-5xl font-bold text-info mb-4">3</div>
+                        <h4 class="text-xl font-bold mb-3 text-primary">Conversión Comercial</h4>
+                        <p class="text-sm text-secondary">Convertimos los requerimientos de nutrientes puros (P, K) a su forma comercial equivalente (P₂O₅, K₂O) para formular el plan de abonado.</p>
+                    </div>
+                </div>
+             </div>
+        </section>
+        
+        <section class="my-20">
+            <h2 class="text-4xl section-heading">Recomendación de Abonamiento y Zonificación</h2>
+             <div class="card card-dark p-8 mt-8">
+                 <h3 class="text-3xl mb-6 text-center text-white font-bold">Estrategia para un Objetivo de 14 Tm/Ha</h3>
+                 <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="table-header">
+                                <th class="p-4 font-bold text-lg text-white">Concepto</th>
+                                <th class="p-4 font-bold text-lg text-center text-white" colspan="2">Plan Actual (Uniforme)</th>
+                                <th class="p-4 font-bold text-lg text-center text-white" colspan="2" style="background-color:var(--color-teal);">Plan Optimizado Tres60</th>
+                            </tr>
+                            <tr class="text-sm bg-gray-700">
+                                <th class="p-3 text-white">Insumo</th>
+                                <th class="p-3 text-center text-white">Dosis</th>
+                                <th class="p-3 text-center text-white">Costo (€/Ha)</th>
+                                <th class="p-3 text-center text-white">Dosis Media</th>
+                                <th class="p-3 text-center text-white">Costo (€/Ha)</th>
+                            </tr>
+                        </thead>
+                        <tbody class="text-sm">
+                            <tr class="table-row border-t border-gray-600">
+                                <td class="p-3 text-white">Purín (8-4-4)</td>
+                                <td class="p-3 text-center text-white">3.0 m³</td>
+                                <td class="p-3 text-center text-white">28.5</td>
+                                <td class="p-3 text-center font-bold text-gray-400">-</td>
+                                <td class="p-3 text-center font-bold text-gray-400">-</td>
+                            </tr>
+                            <tr class="table-row border-t border-gray-600">
+                                <td class="p-3 text-white">Urea (46%)</td>
+                                <td class="p-3 text-center text-white">400.0 Kg</td>
+                                <td class="p-3 text-center text-white">720.0</td>
+                                <td class="p-3 text-center font-bold text-gray-400">-</td>
+                                <td class="p-3 text-center font-bold text-gray-400">-</td>
+                            </tr>
+                             <tr class="table-row border-t border-gray-600">
+                                <td class="p-3 text-white">Purín (7-6-3)</td>
+                                <td class="p-3 text-center font-bold text-gray-400">-</td>
+                                <td class="p-3 text-center font-bold text-gray-400">-</td>
+                                <td class="p-3 text-center text-white">3.0 m³</td>
+                                <td class="p-3 text-center text-white">36.0</td>
+                            </tr>
+                            <tr class="table-row border-t border-gray-600">
+                                <td class="p-3 text-white">Urea (46%)</td>
+                                <td class="p-3 text-center font-bold text-gray-400">-</td>
+                                <td class="p-3 text-center font-bold text-gray-400">-</td>
+                                <td class="p-3 text-center text-white">400.0 Kg</td>
+                                <td class="p-3 text-center text-white">720.0</td>
+                            </tr>
+                        </tbody>
+                        <tfoot class="font-bold text-lg">
+                            <tr class="border-t-4 border-gray-500">
+                                <td class="p-4 text-white">Costo Total Estimado</td>
+                                <td class="p-4 text-center text-white" colspan="2">748.5 €/Ha</td>
+                                <td class="p-4 text-center text-white" colspan="2" style="background-color:var(--color-success);">756 €/Ha</td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+                 <div class="mt-8 bg-gray-800 p-6 rounded-lg">
+                     <h4 class="text-2xl font-bold mb-4 text-teal text-center">Abono por Zonas (Aplicación Variable)</h4>
+                     <p class="text-gray-300 mb-6 text-center">Aplicar los recursos de forma inteligente según el potencial real de cada zona permite optimizar la inversión.</p>
+                      <table class="w-full text-center border-collapse">
+                        <thead>
+                            <tr class="bg-gray-700">
+                                <th class="p-3 font-semibold text-white">Zona de Manejo</th>
+                                <th class="p-3 font-semibold text-white">Superficie</th>
+                                <th class="p-3 font-semibold text-white">Dosis Aplicada</th>
+                                <th class="p-3 font-semibold text-white">Costo por Zona</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr class="border-b border-gray-600">
+                                <td class="p-3 text-white">Alto Potencial</td>
+                                <td class="p-3 text-white">10.48 Ha</td>
+                                <td class="p-3 text-success font-bold">100%</td>
+                                <td class="p-3 text-white">330 €/Ha</td>
+                            </tr>
+                            <tr class="border-b border-gray-600">
+                                <td class="p-3 text-white">Medio Potencial A</td>
+                                <td class="p-3 text-white">6.91 Ha</td>
+                                <td class="p-3 text-warning font-bold">94%</td>
+                                <td class="p-3 text-white">205 €/Ha</td>
+                            </tr>
+                            <tr>
+                                <td class="p-3 text-white">Medio Potencial B</td>
+                                <td class="p-3 text-white">6.63 Ha</td>
+                                <td class="p-3 text-warning font-bold">86%</td>
+                                <td class="p-3 text-white">179 €/Ha</td>
+                            </tr>
+                        </tbody>
+                        <tfoot class="bg-green-800 font-bold text-lg">
+                            <tr>
+                                <td colspan="4" class="p-4 text-white">Costo Total con Tasa Variable: 714 €/Ha (Ahorro de 42 €/Ha vs. Plan Optimizado Uniforme)</td>
+                            </tr>
+                        </tfoot>
+                     </table>
+                 </div>
+             </div>
+        </section>
+
+        <section class="my-20">
+            <h2 class="text-4xl section-heading">Mapas de Variabilidad de la Parcela</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div class="card p-4">
+                    <img src="https://i.postimg.cc/7Y4HFcXj/mosaico-horizontal-1.png" class="rounded-lg w-full shadow-lg">
+                    <button class="map-expander-btn mt-4 w-full btn-primary py-3 px-4 rounded-lg font-bold transition-all">Ampliar Mapa</button>
+                </div>
+                <div class="card p-4">
+                    <img src="https://i.postimg.cc/4xgZYNdW/mosaico-horizontal-2.png" class="rounded-lg w-full shadow-lg">
+                    <button class="map-expander-btn mt-4 w-full btn-primary py-3 px-4 rounded-lg font-bold transition-all">Ampliar Mapa</button>
+                </div>
+                <div class="card p-4">
+                    <img src="https://i.postimg.cc/zB6Y8q6S/mosaico-horizontal-3.png" class="rounded-lg w-full shadow-lg">
+                    <button class="map-expander-btn mt-4 w-full btn-primary py-3 px-4 rounded-lg font-bold transition-all">Ampliar Mapa</button>
+                </div>
+                <div class="card p-4">
+                    <img src="https://i.postimg.cc/0Qb1TzWy/mosaico-horizontal-4.png" class="rounded-lg w-full shadow-lg">
+                    <button class="map-expander-btn mt-4 w-full btn-primary py-3 px-4 rounded-lg font-bold transition-all">Ampliar Mapa</button>
+                </div>
+            </div>
+        </section>
+        
+        <section class="my-20 text-center">
+            <div class="card bg-gradient-warning p-10 text-white">
+                <h2 class="text-4xl font-bold mb-6">Descargar Informe Completo</h2>
+                <p class="mb-8 max-w-2xl mx-auto text-lg opacity-90">Para un análisis exhaustivo, detalles metodológicos y referencias, puede descargar el informe original en formato PDF.</p>
+                <a href="https://1drv.ms/b/c/21416ba2793ec5c7/ESK5HcweslBDiBj6jYand84BpWNdBeWugDspTQHmPTxR3w?e=70U1RF" target="_blank" rel="noopener noreferrer" class="inline-block bg-white text-orange-600 font-bold py-4 px-8 rounded-lg transition-all hover:scale-105 text-lg shadow-xl">
+                    📄 Descargar PDF
+                </a>
+            </div>
+        </section>
+    </main>
+
+    <footer class="mt-16 py-8 bg-gradient-primary">
+        <div class="max-w-7xl mx-auto text-center">
+            <p class="text-white font-semibold">&copy; 2025 Tres60 analytics. Todos los derechos reservados.</p>
+        </div>
+    </footer>
+
+    <!-- Modal para imágenes -->
+    <div id="image-modal" class="fixed inset-0 bg-black/90 flex items-center justify-center p-4 z-[100] opacity-0 pointer-events-none transition-all duration-300">
+        <div class="bg-white p-3 rounded-xl max-w-6xl max-h-[95vh] overflow-auto relative shadow-2xl">
+            <button id="modal-close-btn" class="absolute -top-2 -right-2 text-white bg-red-500 hover:bg-red-600 rounded-full w-10 h-10 flex items-center justify-center text-xl font-bold z-10 shadow-lg transition-colors">&times;</button>
+            <img id="modal-image" src="" alt="Mapa ampliado" class="w-full h-auto rounded-lg">
+        </div>
+    </div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        // --- DATA ---
+        const nutrientData = [
+            { name: 'Nitrógeno (N)', valueStr: '4.8-28.3 mg/Kg', level: 'Muy Bajo', value: 10, interpretation: 'Deficiencia generalizada. La respuesta a la fertilización nitrogenada será muy alta. Es prioritario para el crecimiento vegetativo.', color: '#ef4444' },
+            { name: 'Fósforo (P)', valueStr: '1.3-7.5 mg/Kg', level: 'Muy Bajo a Bajo', value: 15, interpretation: 'Deficiencia crítica para el desarrollo radicular y energético temprano. El pH alcalino agrava la fijación del fósforo.', color: '#ef4444' },
+            { name: 'Potasio (K)', valueStr: '18.5-65.4 mg/Kg', level: 'Muy Bajo', value: 20, interpretation: 'Niveles insuficientes para el llenado de grano y la resistencia a enfermedades y estrés hídrico.', color: '#ef4444' },
+            { name: 'Calcio (Ca)', valueStr: '252-699 mg/Kg', level: 'Muy Bajo a Bajo', value: 30, interpretation: 'A pesar del pH alcalino, su disponibilidad es limitada por antagonismos con otros cationes y la baja CIC.', color: '#f59e0b' },
+            { name: 'Magnesio (Mg)', valueStr: '23-66 mg/Kg', level: 'Bajo', value: 35, interpretation: 'Componente central de la clorofila. Su deficiencia afecta directamente a la fotosíntesis y el vigor de la planta.', color: '#f59e0b' },
+            { name: 'Boro (B)', valueStr: '0.0-0.1 mg/Kg', level: 'Muy Bajo', value: 5, interpretation: 'Deficiencia severa. El Boro es crucial para la viabilidad del polen, la floración y el cuajado del grano.', color: '#ef4444' },
+            { name: 'Hierro (Fe)', valueStr: '2.0-3.5 mg/Kg', level: 'Muy Bajo a Bajo', value: 10, interpretation: 'El pH alcalino reduce su disponibilidad a apenas un 10%. Esencial para la síntesis de clorofila.', color: '#ef4444' },
+            { name: 'Zinc (Zn)', valueStr: '0.1-0.6 mg/Kg', level: 'Muy Bajo a Medio', value: 25, interpretation: 'Clave para la síntesis de auxinas (hormonas de crecimiento). Su deficiencia provoca un crecimiento raquítico.', color: '#f59e0b' },
+            { name: 'Cobre (Cu)', valueStr: 'No detectado (<0.2 mg/Kg)', level: 'Muy Bajo', value: 5, interpretation: 'Fundamental en diversas enzimas y en la lignificación. La disponibilidad es casi nula por el pH.', color: '#ef4444' },
+            { name: 'Manganeso (Mn)', valueStr: 'No detectado (<0.5 mg/Kg)', level: 'Muy Bajo', value: 5, interpretation: 'Esencial para la fotosíntesis (fotólisis del agua) y la activación de enzimas. Deficiencia severa confirmada.', color: '#ef4444' },
+        ];
+        
+        const limitingFactorsData = [
+            { nutrient: 'Nitrógeno (N)', f1: 'Materia Orgánica', f2: 'Textura', f3: 'pH' },
+            { nutrient: 'Fósforo (P)', f1: 'Materia Orgánica', f2: 'pH', f3: 'Textura' },
+            { nutrient: 'Potasio (K)', f1: 'Textura', f2: 'Materia Orgánica', f3: 'Antagonismos' },
+            { nutrient: 'Magnesio (Mg)', f1: 'Antagonismos', f2: 'CIC', f3: 'Temperatura' },
+            { nutrient: 'Calcio (Ca)', f1: 'Antagonismos', f2: 'CIC', f3: 'Temperatura' },
+            { nutrient: 'Boro (B)', f1: 'Antagonismos', f2: 'Materia Orgánica', f3: 'pH' },
+            { nutrient: 'Hierro (Fe)', f1: 'pH', f2: 'Materia Orgánica', f3: 'CIC' },
+            { nutrient: 'Cobre (Cu)', f1: 'pH', f2: 'Materia Orgánica', f3: 'CIC' },
+            { nutrient: 'Zinc (Zn)', f1: 'pH', f2: 'Materia Orgánica', f3: 'Antagonismos' },
+            { nutrient: 'Manganeso (Mn)', f1: 'pH', f2: 'Materia Orgánica', f3: 'Textura' }
+        ];
+
+        // --- RENDER FUNCTIONS ---
+        const nutrientContainer = document.getElementById('nutrient-analysis-container');
+        if (nutrientContainer) {
+            nutrientData.forEach((item) => {
+                const card = document.createElement('div');
+                card.className = 'card p-6 hover:scale-105 transition-transform';
+                card.innerHTML = `
+                    <h3 class="text-xl font-bold mb-4 text-primary">${item.name}</h3>
+                    <div class="mt-4">
+                        <div class="flex justify-between text-sm mb-3">
+                            <span class="font-bold text-lg px-3 py-1 rounded-lg" style="color:${item.color}; background-color: ${item.color}20;">${item.level}</span>
+                            <span class="text-secondary font-semibold">${item.valueStr}</span>
+                        </div>
+                        <div class="nutrient-bar h-6 relative rounded-lg overflow-hidden">
+                            <div class="absolute left-0 top-0 h-full border-r-2 border-gray-300" style="width:33.3%"></div>
+                            <div class="absolute left-1/3 top-0 h-full border-r-2 border-gray-300" style="width:33.3%"></div>
+                            <div class="h-6 rounded-lg transition-all duration-1000" style="width: ${item.value}%; background: linear-gradient(90deg, ${item.color}, ${item.color}cc);"></div>
+                        </div>
+                    </div>
+                    <p class="mt-4 text-secondary leading-relaxed">${item.interpretation}</p>
+                `;
+                nutrientContainer.appendChild(card);
+            });
+        }
+
+        const factorsHeader = document.getElementById('limiting-factors-header');
+        if(factorsHeader) {
+            factorsHeader.innerHTML = `
+                <th class="p-4 font-bold text-lg text-white">Nutriente</th>
+                <th class="p-4 font-bold text-lg text-white">Primario</th>
+                <th class="p-4 font-bold text-lg text-white">Secundario</th>
+                <th class="p-4 font-bold text-lg text-white">Terciario</th>
+            `;
+        }
+        
+        const factorsBody = document.getElementById('limiting-factors-body');
+        if(factorsBody){
+            limitingFactorsData.forEach(item => {
+                factorsBody.innerHTML += `
+                    <tr class="table-row border-t-2 border-gray-200">
+                        <td class="p-4 font-semibold text-primary">${item.nutrient}</td>
+                        <td class="p-4 font-bold rounded-lg" style="background-color: var(--limit-1-bg); color: var(--limit-1-text);">${item.f1}</td>
+                        <td class="p-4 font-bold rounded-lg" style="background-color: var(--limit-2-bg); color: var(--limit-2-text);">${item.f2}</td>
+                        <td class="p-4 font-bold rounded-lg" style="background-color: var(--limit-3-bg); color: var(--limit-3-text);">${item.f3}</td>
+                    </tr>
+                `;
+            });
+        }
+        
+        // --- CHARTS ---
+        Chart.defaults.color = '#64748b';
+        Chart.defaults.font.family = "'Inter', sans-serif";
+        
+        const createGauge = (canvasId, value, color) => {
+            const canvas = document.getElementById(canvasId);
+            if (!canvas) return; 
+            const ctx = canvas.getContext('2d');
+            if (!ctx) return; 
+            new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    datasets: [{
+                        data: [value, 100 - value],
+                        backgroundColor: [color, '#475569'],
+                        borderWidth: 0,
+                        borderRadius: 8,
+                    }]
+                },
+                options: {
+                    rotation: -90,
+                    circumference: 180,
+                    cutout: '75%',
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: {
+                        tooltip: { enabled: false }
+                    },
+                    animation: {
+                        animateRotate: true,
+                        duration: 2000
+                    }
+                }
+            });
+        }
+        
+        createGauge('ph-gauge', 90, '#ef4444'); 
+        createGauge('mo-gauge', 20, '#ef4444'); 
+        createGauge('ipp-gauge', 75, '#f59e0b');
+        createGauge('k-gauge', 20, '#ef4444');
+        createGauge('biosustainability-gauge', 56, '#f59e0b');
+        createGauge('biocontrol-gauge', 10, '#ef4444');
+        createGauge('resilience-gauge', 20, '#ef4444');
+        createGauge('fh-ratio-gauge', 30, '#f59e0b');
+
+        // --- MODAL ---
+        const modal = document.getElementById('image-modal');
+        if(modal) {
+            document.querySelectorAll('.map-expander-btn').forEach(button => {
+                button.addEventListener('click', function() { 
+                    const imageContainer = this.closest('.card');
+                    if(imageContainer) {
+                        const image = imageContainer.querySelector('img');
+                        if (image) {
+                            modal.querySelector('#modal-image').src = image.src; 
+                            modal.classList.remove('opacity-0', 'pointer-events-none'); 
+                        }
+                    }
+                });
+            });
+            
+            const closeModal = () => modal.classList.add('opacity-0', 'pointer-events-none');
+            document.getElementById('modal-close-btn').addEventListener('click', closeModal);
+            modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
+            document.addEventListener('keydown', (e) => { if (e.key === "Escape") closeModal(); });
+        }
+    });
+</script>
+
+</body>
+</html>
